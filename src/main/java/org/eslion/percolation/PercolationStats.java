@@ -1,5 +1,8 @@
 package org.eslion.percolation;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 public class PercolationStats {
@@ -59,13 +62,20 @@ public class PercolationStats {
     private double experiment() {
         Percolation p = new Percolation(size);
         int c = 0;
-        while (!p.percolates()) {
-            int i = RANDOM.nextInt(size);
-            int j = RANDOM.nextInt(size);
-            if (!p.isOpen(i, j)) c++;
-            p.open(i, j);
+        List<Integer> rand = new ArrayList<Integer>(size * size);
+        for (int i = 0; i < size * size; i++){
+            rand.add(i);
         }
-        return (double)c / (size * size);
+        Collections.shuffle(rand, RANDOM);
+        while (!p.percolates()) {
+            int next = rand.get(c++);
+            int i = next % size;
+            int j = next / size;
+            if (!p.isOpen(i, j)){
+                p.open(i, j);
+            }
+        }
+        return (double) c / (size * size);
     }
 
     /**

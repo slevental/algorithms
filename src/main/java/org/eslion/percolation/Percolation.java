@@ -3,7 +3,6 @@ package org.eslion.percolation;
 import org.eslion.unionfind.UnionFind;
 import org.eslion.unionfind.WeightedQuickUnion;
 
-import java.util.Arrays;
 import java.util.BitSet;
 
 /**
@@ -15,7 +14,8 @@ public class Percolation {
     private final int size;
     private final int upperVirtualSite;
     private final int downVirtualSite;
-    private final UnionFind container;
+    private final UnionFind percolationArray;
+    private final UnionFind isFullArray;
     private final BitSet states;
 
     /**
@@ -26,7 +26,8 @@ public class Percolation {
     public Percolation(int size) {
         int sqSize = size * size;
         this.size = size;
-        this.container = new WeightedQuickUnion(sqSize + ADDITIONAL_SITES_COUNT);
+        this.percolationArray = new WeightedQuickUnion(sqSize + ADDITIONAL_SITES_COUNT);
+        this.isFullArray = new WeightedQuickUnion(sqSize + 1);
         this.states = new BitSet(sqSize);
         this.upperVirtualSite = sqSize;
         this.downVirtualSite = sqSize + 1;
@@ -50,11 +51,13 @@ public class Percolation {
         if (i < 0 || i >= size)
             return;
         if (j < 0) {
-            container.union(original, upperVirtualSite);
+            percolationArray.union(original, upperVirtualSite);
+            isFullArray.union(original, upperVirtualSite);
         } else if (j >= size) {
-            container.union(original, downVirtualSite);
+            percolationArray.union(original, downVirtualSite);
         } else if (isOpen(i, j)) {
-            container.union(original, i + j * size);
+            percolationArray.union(original, i + j * size);
+            isFullArray.union(original, i + j * size);
         }
     }
 
@@ -69,17 +72,13 @@ public class Percolation {
      * is site (row i, column j) full?
      */
     public boolean isFull(int i, int j) {
-        return states.get(i + j * size) && container.connected(upperVirtualSite, i + j * size);
+        return states.get(i + j * size) && isFullArray.connected(upperVirtualSite, i + j * size);
     }
 
     /**
      * does the system percolate?
      */
     public boolean percolates() {
-        return container.connected(upperVirtualSite, downVirtualSite);
-    }
-
-    public static void main(String[] args) {
-        System.out.println("test");
+        return percolationArray.connected(upperVirtualSite, downVirtualSite);
     }
 }
