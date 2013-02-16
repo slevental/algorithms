@@ -93,6 +93,8 @@ public class Deque<E> implements Iterable<E> {
 
         @Override
         public E next() {
+            if (!hasNext())
+                throw new NoSuchElementException();
             return (E) container[current = (current + 1) & container.length - 1];
         }
 
