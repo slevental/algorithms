@@ -2,7 +2,6 @@ package org.eslion.queue;
 
 import org.apache.commons.lang.Validate;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -18,54 +17,53 @@ public class Deque<E> implements Iterable<E> {
         container = (E[]) new Object[DEFAULT_SIZE];
     }
 
+    public Deque(int size) {
+        int pof2 = 1;
+        while ((pof2 = pof2 << 1) < size);
+        container = (E[]) new Object[pof2];
+    }
+
     public boolean isEmpty() {
         return size() == 0;
     }
 
     public int size() {
-        return head - tail;
+        return head - tail & (container.length - 1);
     }
 
     public void addFirst(E item) {
         checkItem(item);
-        int h = (head + 1) & (container.length - 1);
-        container[h] = item;
-        head = h;
+        container[head = (head + 1) & (container.length - 1)] = item;
         if (head == tail)
-            grow();
+            resizeArray();
     }
 
     public void addLast(E item) {
         checkItem(item);
-        int t = (tail - 1) & (container.length - 1);
         container[tail] = item;
-        tail = t;
-        if (head == tail)
-            grow();
+        if (head == (tail = (tail - 1) & (container.length - 1)))
+            resizeArray();
     }
 
     public E removeFirst() {
         if (isEmpty())
             throw new NoSuchElementException();
-        int h = (head - 1) & (container.length - 1);
         E e = container[head];
         container[head] = null;
-        head = h;
+        head = (head - 1) & (container.length - 1);
         return e;
     }
 
     public E removeLast() {
         if (isEmpty())
             throw new NoSuchElementException();
-        int t = (tail + 1) & (container.length - 1);
-        E e = container[t];
-        container[t] = null;
-        tail = t;
+        E e = container[tail = (tail + 1) & (container.length - 1)];
+        container[tail] = null;
         return e;
     }
 
     public Iterator<E> iterator() {
-        return null;
+        return new DequeIterator<E>();
     }
 
     private void checkItem(E item) {
@@ -73,7 +71,7 @@ public class Deque<E> implements Iterable<E> {
             throw new NullPointerException("Item is null");
     }
 
-    private void grow() {
+    private void resizeArray() {
         Validate.isTrue(tail == head);
         E[] prev = container;
         container = (E[]) new Object[prev.length * 2];
@@ -85,8 +83,31 @@ public class Deque<E> implements Iterable<E> {
         tail = container.length - 1;
     }
 
-    @Override
-    public String toString() {
-        return Arrays.toString(container);
+    private class DequeIterator<E> implements Iterator<E> {
+        int current = tail;
+
+        @Override
+        public boolean hasNext() {
+            return current != head;
+        }
+
+        @Override
+        public E next() {
+            return (E) container[current = (current + 1) & container.length - 1];
+        }
+
+        @Override
+        public void remove() {
+            if (current >= tail) {
+                int n = current - tail; // elements after tail
+                System.arraycopy(container, tail, container, tail = (tail + 1) & container.length - 1, n);
+            } else {
+                int n = head - current; // elements before head
+                System.arraycopy(container, current + 1, container, current, n + 1);
+                current = (current - 1) & container.length - 1;
+                head = (head - 1) & (container.length - 1);
+            }
+        }
     }
+
 }
