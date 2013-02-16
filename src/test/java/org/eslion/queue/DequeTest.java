@@ -102,11 +102,43 @@ public class DequeTest {
     }
 
     @Test
-    public void testSizeGrowTest() throws Exception {
+    public void testSizeGrowTest_bothDirections() throws Exception {
         for (int i = 0; i < 20; i++){ q.addFirst("1"); q.addLast("2"); }
         for (int i = 0; i < 20; i++){
             assertEquals("1", q.removeFirst());
             assertEquals("2", q.removeLast());
+        }
+    }
+
+    @Test
+    public void testSizeGrowTest_tailDirection() throws Exception {
+        for (int i = 0; i < 20; i++){ q.addLast("2"); }
+        for (int i = 0; i < 20; i++){
+            assertEquals("2", q.removeLast());
+        }
+    }
+
+    @Test
+    public void testSizeGrowTest_headDirection() throws Exception {
+        for (int i = 0; i < 20; i++){ q.addFirst("2"); }
+        for (int i = 0; i < 20; i++){
+            assertEquals("2", q.removeFirst());
+        }
+    }
+
+    @Test
+    public void testSizeGrowTest_headDirectionCheckFromTail() throws Exception {
+        for (int i = 0; i < 20; i++){ q.addFirst("2"); }
+        for (int i = 0; i < 20; i++){
+            assertEquals("2", q.removeLast());
+        }
+    }
+
+    @Test
+    public void testSizeGrowTest_tailDirectionCheckFromHead() throws Exception {
+        for (int i = 0; i < 20; i++){ q.addLast("2"); }
+        for (int i = 0; i < 20; i++){
+            assertEquals("2", q.removeFirst());
         }
     }
 
