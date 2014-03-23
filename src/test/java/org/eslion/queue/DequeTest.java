@@ -3,6 +3,7 @@ package org.eslion.queue;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -34,6 +35,15 @@ public class DequeTest {
         assertEquals(N, q.size());
     }
 
+    @Test(expected = ConcurrentModificationException.class)
+    public void testIteratorForCME() throws Exception {
+        q.addFirst("1");
+        q.addFirst("1");
+        Iterator<String> i = q.iterator();
+        q.removeFirst();
+        i.next();
+    }
+
     @Test
     public void testSize_addSomeAndRemove() throws Exception {
         q.addFirst("1");
@@ -46,6 +56,66 @@ public class DequeTest {
     @Test(expected = NoSuchElementException.class)
     public void testSize_removeFromEmptyQueue() throws Exception {
         q.removeFirst();
+    }
+
+    @Test
+    public void testIterator_addToTail() throws Exception {
+        q.addLast("4");
+        q.addLast("3");
+        q.addLast("2");
+        q.addLast("1");
+        Iterator<String> i1 = q.iterator();
+        Iterator<String> i2 = q.iterator();
+        assertEquals("1",i1.next());
+        assertEquals("1",i2.next());
+        assertEquals("2",i2.next());
+        assertEquals("3",i2.next());
+        assertEquals("4",i2.next());
+        assertEquals("2",i1.next());
+        assertEquals("3",i1.next());
+        assertEquals("4",i1.next());
+        assertFalse(i1.hasNext());
+        assertFalse(i2.hasNext());
+    }
+
+    @Test
+    public void testIterator_addToHead() throws Exception {
+        q.addFirst("4");
+        q.addFirst("3");
+        q.addFirst("2");
+        q.addFirst("1");
+        Iterator<String> i1 = q.iterator();
+        Iterator<String> i2 = q.iterator();
+        assertEquals("4",i1.next());
+        assertEquals("4",i2.next());
+        assertEquals("3",i2.next());
+        assertEquals("2",i2.next());
+        assertEquals("1",i2.next());
+        assertEquals("3",i1.next());
+        assertEquals("2",i1.next());
+        assertEquals("1",i1.next());
+        assertFalse(i1.hasNext());
+        assertFalse(i2.hasNext());
+    }
+
+    @Test
+    public void testIterator_fewIterators() throws Exception {
+        q.addFirst("2");
+        q.addFirst("3");
+        q.addLast("1");
+        q.addLast("0");
+        Iterator<String> i1 = q.iterator();
+        Iterator<String> i2 = q.iterator();
+        assertEquals("0",i2.next());
+        assertEquals("0",i1.next());
+        assertEquals("1",i1.next());
+        assertEquals("1",i2.next());
+        assertEquals("2",i2.next());
+        assertEquals("3",i2.next());
+        assertEquals("2",i1.next());
+        assertEquals("3",i1.next());
+        assertFalse(i1.hasNext());
+        assertFalse(i2.hasNext());
     }
 
     @Test
@@ -62,7 +132,7 @@ public class DequeTest {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testAddFisrt_null() throws Exception {
+    public void testAddFirst_null() throws Exception {
         q.addFirst(null);
     }
 

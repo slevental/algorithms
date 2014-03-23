@@ -24,21 +24,37 @@ public class RandomizedQueue<E> implements Iterable<E> {
         return head;
     }
 
+
     public void enqueue(E item) {
-        container[head++] = item;
+        if (item == null)
+            throw new NullPointerException();
+        int h = head++;
+        int toSwap = rnd.nextInt(head);
+        container[h] = item;
+        if (toSwap != h) {
+            E e = container[toSwap];
+            container[h] = e;
+            container[toSwap] = item;
+        }
         if (head == container.length) {
             doubleArray();
         }
     }
 
     public E dequeue() {
-        int idx = rnd.nextInt(head);
-        E res = container[idx];
-        System.arraycopy(container, idx + 1, container, idx, head-- - idx);
+        if (isEmpty())
+            throw new NoSuchElementException();
+        E res = container[--head];
+        container[head] = null; //for gc
+        if (head < container.length / 4)
+            shrinkArray();
         return res;
     }
 
+
     public E sample() {
+        if (isEmpty())
+            throw new NoSuchElementException();
         return container[rnd.nextInt(head)];
     }
 
@@ -49,6 +65,12 @@ public class RandomizedQueue<E> implements Iterable<E> {
     private void doubleArray() {
         E[] prev = container;
         container = (E[]) new Object[head << 1];
+        System.arraycopy(prev, 0, container, 0, head);
+    }
+
+    private void shrinkArray() {
+        E[] prev = container;
+        container = (E[]) new Object[Math.max(prev.length / 2, DEFAULT_SIZE)];
         System.arraycopy(prev, 0, container, 0, head);
     }
 

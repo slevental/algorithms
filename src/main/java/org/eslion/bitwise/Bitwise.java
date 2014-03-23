@@ -21,4 +21,5 @@ public final class Bitwise {
         x = x | (x >> 16);
         return x + 1;
     }
+
 }

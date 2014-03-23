@@ -2,16 +2,19 @@ package org.eslion.queue;
 
 import org.apache.commons.lang.Validate;
 
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 @SuppressWarnings({"unchecked"})
 public class Deque<E> implements Iterable<E> {
-    private static final int DEFAULT_SIZE = 0x10;
+    private static final int DEFAULT_SIZE = 0x2;
 
     private int head;
     private int tail;
     private E[] container;
+
+    private int modCount;
 
     public Deque() {
         container = (E[]) new Object[DEFAULT_SIZE];
@@ -19,7 +22,7 @@ public class Deque<E> implements Iterable<E> {
 
     public Deque(int size) {
         int pof2 = 1;
-        while ((pof2 = pof2 << 1) < size);
+        while ((pof2 = pof2 << 1) < size) ;
         container = (E[]) new Object[pof2];
     }
 
@@ -32,6 +35,7 @@ public class Deque<E> implements Iterable<E> {
     }
 
     public void addFirst(E item) {
+        modCount++;
         checkItem(item);
         container[head = (head + 1) & (container.length - 1)] = item;
         if (head == tail)
@@ -39,6 +43,7 @@ public class Deque<E> implements Iterable<E> {
     }
 
     public void addLast(E item) {
+        modCount++;
         checkItem(item);
         container[tail] = item;
         if (head == (tail = (tail - 1) & (container.length - 1)))
@@ -48,17 +53,23 @@ public class Deque<E> implements Iterable<E> {
     public E removeFirst() {
         if (isEmpty())
             throw new NoSuchElementException();
+        modCount++;
         E e = container[head];
         container[head] = null;
         head = (head - 1) & (container.length - 1);
+        if (size() < container.length / 4)
+            shrinkArray();
         return e;
     }
 
     public E removeLast() {
         if (isEmpty())
             throw new NoSuchElementException();
+        modCount++;
         E e = container[tail = (tail + 1) & (container.length - 1)];
         container[tail] = null;
+        if (size() < container.length / 4)
+            shrinkArray();
         return e;
     }
 
@@ -69,6 +80,30 @@ public class Deque<E> implements Iterable<E> {
     private void checkItem(E item) {
         if (item == null)
             throw new NullPointerException("Item is null");
+    }
+
+    private void shrinkArray() {
+        if (tail == head)
+            return;
+
+        E[] c = container;
+        container = (E[]) new Object[Math.max(c.length / 4, DEFAULT_SIZE)];
+
+        int n = c.length - 1; // last index of array
+        int t = n - tail; // elements from tail to right edge
+        int h = head + 1; // elements from left edge to head mark
+
+        if (tail > head) {
+            System.arraycopy(c, (tail + 1) & n, container, 0, t);
+            System.arraycopy(c, 0, container, t, h);
+            head = t + head;
+        } else {
+            System.arraycopy(c, (tail + 1) & n, container, 0, size());
+            head = size() - 1;
+        }
+
+        // fill new tail mark
+        tail = container.length - 1;
     }
 
     private void resizeArray() {
@@ -85,6 +120,7 @@ public class Deque<E> implements Iterable<E> {
 
     private class DequeIterator<E> implements Iterator<E> {
         int current = tail;
+        int originalModCount = modCount;
 
         @Override
         public boolean hasNext() {
@@ -95,11 +131,15 @@ public class Deque<E> implements Iterable<E> {
         public E next() {
             if (!hasNext())
                 throw new NoSuchElementException();
+            if (modCount != originalModCount)
+                throw new ConcurrentModificationException();
             return (E) container[current = (current + 1) & container.length - 1];
         }
 
         @Override
         public void remove() {
+            if (modCount != originalModCount)
+                throw new ConcurrentModificationException();
             if (current >= tail) {
                 int n = current - tail; // elements after tail
                 System.arraycopy(container, tail, container, tail = (tail + 1) & container.length - 1, n);

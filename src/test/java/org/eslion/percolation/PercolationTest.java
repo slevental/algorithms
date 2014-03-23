@@ -3,6 +3,8 @@ package org.eslion.percolation;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Random;
+
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
@@ -39,6 +41,16 @@ public class PercolationTest {
         assertTrue(p.isFull(1, 1));
         assertTrue(p.isFull(0, 0));
         assertTrue(p.isFull(0, 1));
+    }
+
+    @Test
+    public void testIsFull_backwash() throws Exception {
+        p.open(0, 0);
+        p.open(0, 1);
+        p.open(0, 2);
+        assertTrue(p.percolates());
+        p.open(2, 2);
+        assertFalse(p.isFull(2, 2));
     }
 
     @Test
